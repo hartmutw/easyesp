@@ -1,3 +1,4 @@
+
 // Node-RED Funktionsknoten zur Ansteuerung von Relais für eine Lüftungsklappe (Auf/Zu)
 // Dieser Knoten ist für ZWEI AUSGÄNGE konfiguriert.
 // Version mit ASCII-Pfad (Lueftung statt Lüftung)
