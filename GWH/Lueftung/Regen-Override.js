@@ -1,22 +1,30 @@
 // Node-RED Funktionsknoten zur Anpassung des Lüftungs-Sollwerts bei Regen.
 // Eingang: msg.payload (Sollwert %) oder msg.regen (0/1)
 // Ausgang: msg.payload (angepasster Sollwert %)
-// Verwendet Flow-Kontext für "Oeffnung_bei_Regen_Prozent"
+// Verwendet Flow-Kontext für "Oeffnung_bei_Regen_Prozent" (mit msg.index als Präfix)
 // Verwendet Knoten-Kontext für "letzter_bekannter_sollwert_prozent" und "aktueller_regen_status"
+
+// msg.index für dynamische Flow-Variablennamen verwenden
+const index_prefix = msg.index;
+if (typeof index_prefix !== 'string' || index_prefix.length === 0) {
+    node.error("msg.index (Präfix für Flow-Variablen) fehlt oder ist ungültig.", msg);
+    return null;
+}
 
 // 1. Konfiguration aus dem Flow-Kontext
 const STANDARD_OEFFNUNG_BEI_REGEN = 10.0;
-let config_oeffnung_bei_regen = parseFloat(flow.get("Oeffnung_bei_Regen_Prozent"));
+let config_oeffnung_bei_regen_var_name = index_prefix + "Oeffnung_bei_Regen_Prozent";
+let config_oeffnung_bei_regen = parseFloat(flow.get(config_oeffnung_bei_regen_var_name));
 
 if (isNaN(config_oeffnung_bei_regen) || config_oeffnung_bei_regen <= 0 || config_oeffnung_bei_regen > 100) {
-    node.warn("Oeffnung_bei_Regen_Prozent im Flow-Kontext nicht gefunden, ungültig (" + config_oeffnung_bei_regen + ") oder außerhalb des Bereichs (0-100]. Verwende Standardwert: " + STANDARD_OEFFNUNG_BEI_REGEN + "%.");
+    node.warn("Flow-Variable '" + config_oeffnung_bei_regen_var_name + "' nicht gefunden, ungültig (" + config_oeffnung_bei_regen + ") oder außerhalb des Bereichs (0-100]. Verwende Standardwert: " + STANDARD_OEFFNUNG_BEI_REGEN + "%.");
     config_oeffnung_bei_regen = STANDARD_OEFFNUNG_BEI_REGEN;
-    flow.set("Oeffnung_bei_Regen_Prozent", config_oeffnung_bei_regen);
+    flow.set(config_oeffnung_bei_regen_var_name, config_oeffnung_bei_regen);
 } else {
     // Sicherstellen, dass der gelesene Wert auch im Flow-Kontext steht (falls er z.B. manuell geändert, aber nicht gespeichert wurde)
     // Dies ist optional, aber stellt Konsistenz sicher.
-    // flow.set("Oeffnung_bei_Regen_Prozent", config_oeffnung_bei_regen);
-    node.log("Oeffnung_bei_Regen_Prozent aus Flow-Kontext geladen: " + config_oeffnung_bei_regen + "%");
+    // flow.set(config_oeffnung_bei_regen_var_name, config_oeffnung_bei_regen);
+    node.log("Flow-Variable '" + config_oeffnung_bei_regen_var_name + "' aus Flow-Kontext geladen: " + config_oeffnung_bei_regen + "%");
 }
 // Der aktive Wert, der im Skript verwendet wird.
 let aktive_oeffnung_bei_regen = config_oeffnung_bei_regen;
@@ -77,13 +85,14 @@ let aktiver_regen_status = context.get("aktueller_regen_status");
 
 // Erneutes Lesen und Validieren des Flow-Kontext-Wertes für den Fall, dass er extern geändert wurde
 // oder beim ersten Setzen etwas schiefging.
-let flow_oeffnung_bei_regen_aktuell = parseFloat(flow.get("Oeffnung_bei_Regen_Prozent"));
+// Die Variable config_oeffnung_bei_regen_var_name wurde bereits oben definiert.
+let flow_oeffnung_bei_regen_aktuell = parseFloat(flow.get(config_oeffnung_bei_regen_var_name));
 if (isNaN(flow_oeffnung_bei_regen_aktuell) || flow_oeffnung_bei_regen_aktuell <= 0 || flow_oeffnung_bei_regen_aktuell > 100) {
     // Dies sollte idealerweise nicht passieren, wenn die Logik oben korrekt funktioniert,
     // aber als zusätzliche Sicherheitsmaßnahme.
-    node.warn("Oeffnung_bei_Regen_Prozent im Flow-Kontext ist unerwartet ungültig (" + flow_oeffnung_bei_regen_aktuell + "). Verwende erneut Standardwert: " + STANDARD_OEFFNUNG_BEI_REGEN + "%.");
+    node.warn("Flow-Variable '" + config_oeffnung_bei_regen_var_name + "' im Flow-Kontext ist unerwartet ungültig (" + flow_oeffnung_bei_regen_aktuell + "). Verwende erneut Standardwert: " + STANDARD_OEFFNUNG_BEI_REGEN + "%.");
     aktive_oeffnung_bei_regen = STANDARD_OEFFNUNG_BEI_REGEN;
-    flow.set("Oeffnung_bei_Regen_Prozent", aktive_oeffnung_bei_regen); // Korrektur im Flow Kontext
+    flow.set(config_oeffnung_bei_regen_var_name, aktive_oeffnung_bei_regen); // Korrektur im Flow Kontext
 } else {
     aktive_oeffnung_bei_regen = flow_oeffnung_bei_regen_aktuell;
 }

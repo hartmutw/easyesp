@@ -1,22 +1,30 @@
-
 // Node-RED Funktionsknoten zur Ansteuerung von Relais für eine Lüftungsklappe (Auf/Zu)
 // Dieser Knoten ist für ZWEI AUSGÄNGE konfiguriert.
-// Version mit ASCII-Pfad (Lueftung statt Lüftung)
+// Verwendet msg.index als Präfix für Flow-Variablen (MAX_RUNTIME_SEC).
+// Stellt sicher, dass msg.index an Ausgänge weitergegeben wird.
+
+// msg.index für dynamische Flow-Variablennamen verwenden
+const index_prefix = msg.index;
+if (typeof index_prefix !== 'string' || index_prefix.length === 0) {
+    node.error("msg.index (Präfix für Flow-Variablen) fehlt oder ist ungültig.", msg);
+    return [null, null]; // Return array for two outputs
+}
 
 // Eingangsparameter und Validierung
 let ziel_prozent = parseFloat(msg.payload);
 if (isNaN(ziel_prozent) || ziel_prozent < 0 || ziel_prozent > 100) {
     node.error("Ungültiger oder fehlender Zielprozentsatz (msg.payload). Muss eine Zahl zwischen 0 und 100 sein.", msg);
-    return null; // Stoppt den Flow, keine Nachrichten an Ausgänge
+    return [null, null]; // Stoppt den Flow, keine Nachrichten an Ausgänge
 }
 
 // Konfiguration aus dem Flow-Kontext
 const STANDARD_MAX_RUNTIME_SEC = 30.0;
-let aktive_max_runtime_sec = parseFloat(flow.get("MAX_RUNTIME_SEC"));
+const max_runtime_var_name = index_prefix + "MAX_RUNTIME_SEC";
+let aktive_max_runtime_sec = parseFloat(flow.get(max_runtime_var_name));
 if (isNaN(aktive_max_runtime_sec)) {
     aktive_max_runtime_sec = STANDARD_MAX_RUNTIME_SEC;
-    flow.set("MAX_RUNTIME_SEC", aktive_max_runtime_sec); // Standardwert im Flow-Kontext setzen/aktualisieren
-    node.warn("MAX_RUNTIME_SEC nicht im Flow-Kontext gefunden/ungültig. Standardwert (" + aktive_max_runtime_sec + "s) wurde verwendet und im Flow-Kontext gesetzt.");
+    flow.set(max_runtime_var_name, aktive_max_runtime_sec); // Standardwert im Flow-Kontext setzen/aktualisieren
+    node.warn("Flow-Variable '" + max_runtime_var_name + "' nicht gefunden/ungültig. Standardwert (" + aktive_max_runtime_sec + "s) wurde verwendet und im Flow-Kontext gesetzt.");
 }
 
 // Interner Zustand (Knoten-Kontext)
@@ -99,6 +107,14 @@ if (ziel_prozent === 0) {
 context.set("aktuelle_position_prozent", ziel_prozent);
 context.set("zuletzt_aktives_relais", naechstes_aktives_relais);
 node.log("Kontext aktualisiert: aktuelle_position_prozent=" + ziel_prozent + "%, zuletzt_aktives_relais=" + naechstes_aktives_relais);
+
+// msg.index an ausgehende Nachrichten anhängen, falls diese existieren
+if (nachricht_ausgang1 !== null) {
+    nachricht_ausgang1.index = index_prefix;
+}
+if (nachricht_ausgang2 !== null) {
+    nachricht_ausgang2.index = index_prefix;
+}
 
 // Nachrichten an die Ausgänge senden
 return [nachricht_ausgang1, nachricht_ausgang2];
