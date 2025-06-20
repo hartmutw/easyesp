@@ -48,26 +48,27 @@ if (msg.end instanceof Date && !isNaN(msg.end.getTime())) {
 }
 
 // 2. Konfiguration aus dem Flow-Kontext
-const STANDARD_OFFSET_MIN = 10;
-const offset_var_name = "Schatt_Sonnenuntergang_Offset_Min"; // Für den Fall, dass msg.index hier auch relevant wird, kann es einfach ergänzt werden.
-let offset_minuten = parseFloat(flow.get(offset_var_name));
+const STANDARD_OFFSET_MIN = -10; // Standard: 10 Minuten *vor* Sonnenuntergang
+const offset_var_name = "Schatt_Vor_Nach_Sonnenuntergang_Min"; // Neuer Name für die Flow-Variable
+let gelesener_offset_wert = parseFloat(flow.get(offset_var_name));
 
-if (isNaN(offset_minuten) || offset_minuten < 0) {
-    node.warn("Flow-Variable '" + offset_var_name + "' nicht gefunden, ungültig (" + offset_minuten + ") oder negativ. Verwende Standardwert: " + STANDARD_OFFSET_MIN + " Minuten.");
-    offset_minuten = STANDARD_OFFSET_MIN;
-    flow.set(offset_var_name, offset_minuten);
+if (isNaN(gelesener_offset_wert)) {
+    node.warn("Flow-Variable '" + offset_var_name + "' nicht gefunden oder ungültig (Wert: " + flow.get(offset_var_name) + "). Verwende Standardwert: " + STANDARD_OFFSET_MIN + " Minuten.");
+    gelesener_offset_wert = STANDARD_OFFSET_MIN;
+    flow.set(offset_var_name, gelesener_offset_wert);
 } else {
-    if (enableNodeLogging) { node.log("Flow-Variable '" + offset_var_name + "' aus Flow-Kontext geladen: " + offset_minuten + " Minuten."); }
-    // Optional: flow.set hier, um sicherzustellen, dass der Wert auch gespeichert ist, falls er manuell geändert wurde.
-    // flow.set(offset_var_name, offset_minuten);
+    if (enableNodeLogging) { node.log("Flow-Variable '" + offset_var_name + "' aus Flow-Kontext geladen: " + gelesener_offset_wert + " Minuten."); }
+    // Optional: flow.set hier, um sicherzustellen, dass der Wert auch gespeichert ist, falls er manuell geändert wurde und um den Typ zu sichern.
+    // flow.set(offset_var_name, gelesener_offset_wert);
 }
 
 // 3. Verarbeitung
-// b. Hole offset_minuten (ist bereits geschehen)
+// b. Hole gelesener_offset_wert (ist bereits geschehen)
 // c. Erzeuge ein neues Date-Objekt berechnete_schliesszeit_date
 let berechnete_schliesszeit_date = new Date(sonnenuntergang_date.getTime());
-berechnete_schliesszeit_date.setMinutes(sonnenuntergang_date.getMinutes() - offset_minuten);
-if (enableNodeLogging) { node.log("Berechnete Schließzeit (Datumsobjekt): " + berechnete_schliesszeit_date.toISOString()); }
+// Addiere den Offset (der negativ sein kann, um die Zeit vorzuverlegen)
+berechnete_schliesszeit_date.setMinutes(sonnenuntergang_date.getMinutes() + gelesener_offset_wert);
+if (enableNodeLogging) { node.log("Berechnete Schließzeit (Datumsobjekt) nach Anwendung des Offsets (" + gelesener_offset_wert + " Min.): " + berechnete_schliesszeit_date.toISOString()); }
 
 // d. Formatierung der Zeitangaben (HH:MM)
 const tatsaechlicher_sonnenuntergang_hhmm = dateToHHMMString(sonnenuntergang_date);
@@ -88,7 +89,7 @@ msg.berechnete_schliesszeit_ts = berechnete_schliesszeit_ts;
 msg.berechnete_schliesszeit_hhmm = berechnete_schliesszeit_hhmm;
 
 // Zusätzliche Info für das Logging
-msg.schatt_offset_min_verwendet = offset_minuten;
-if (enableNodeLogging) { node.log("Ausgehende msg vorbereitet mit berechneten Zeiten. Verwendeter Offset: " + offset_minuten + " Min."); }
+msg.schatt_offset_min_verwendet = gelesener_offset_wert; // Speichere den tatsächlich verwendeten Offset-Wert
+if (enableNodeLogging) { node.log("Ausgehende msg vorbereitet mit berechneten Zeiten. Verwendeter Offset: " + gelesener_offset_wert + " Min."); }
 
 return msg;
