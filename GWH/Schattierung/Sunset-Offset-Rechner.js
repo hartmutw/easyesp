@@ -18,23 +18,32 @@ function dateToHHMMString(dateObj) {
     return hours + ":" + minutes;
 }
 
-// 1. Eingang (Input) Validierung
-if (!msg.end || typeof msg.end !== 'string') {
-    node.error("msg.end fehlt oder ist kein gültiger String.", msg);
-    return null;
-}
-
+// 1. Eingang (Input) Validierung für msg.end
 let sonnenuntergang_date;
-try {
-    sonnenuntergang_date = new Date(msg.end);
-    if (isNaN(sonnenuntergang_date.getTime())) {
-        throw new Error("Ungültiges Datumsformat in msg.end");
+
+if (msg.end instanceof Date && !isNaN(msg.end.getTime())) {
+    // msg.end ist bereits ein gültiges Date-Objekt
+    sonnenuntergang_date = msg.end;
+    node.log("msg.end ist bereits ein gültiges Date-Objekt: " + sonnenuntergang_date.toISOString());
+} else if (typeof msg.end === 'string') {
+    // msg.end ist ein String, versuche zu parsen
+    node.log("msg.end ist ein String ('" + msg.end + "'), versuche zu parsen...");
+    try {
+        sonnenuntergang_date = new Date(msg.end);
+        if (isNaN(sonnenuntergang_date.getTime())) {
+            node.error("Fehler: msg.end ('" + msg.end + "') konnte nicht in ein gültiges Datum geparst werden (Ergebnis ist NaN).", msg);
+            return null;
+        }
+        node.log("Sonnenuntergang (msg.end String) erfolgreich geparst: " + sonnenuntergang_date.toISOString());
+    } catch (e) {
+        node.error("Fehler beim Parsen von msg.end String ('" + msg.end + "') zu einem Datum: " + e.message, msg);
+        return null;
     }
-} catch (e) {
-    node.error("Fehler beim Parsen von msg.end ('" + msg.end + "') zu einem Datum: " + e.message, msg);
+} else {
+    // msg.end fehlt oder hat einen ungültigen Typ
+    node.error("msg.end fehlt, ist kein String oder kein gültiges Date-Objekt. Empfangener Typ: " + typeof msg.end, msg);
     return null;
 }
-node.log("Sonnenuntergang (msg.end) erfolgreich geparst: " + sonnenuntergang_date.toISOString());
 
 // 2. Konfiguration aus dem Flow-Kontext
 const STANDARD_OFFSET_MIN = 10;
