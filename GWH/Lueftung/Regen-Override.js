@@ -4,6 +4,8 @@
 // Verwendet Flow-Kontext für "Oeffnung_bei_Regen_Prozent" (mit msg.index als Präfix)
 // Verwendet Knoten-Kontext für "letzter_bekannter_sollwert_prozent" und "aktueller_regen_status"
 
+const enableNodeLogging = true; // Schalter für node.log Ausgaben
+
 // msg.index für dynamische Flow-Variablennamen verwenden
 const index_prefix = msg.index;
 if (typeof index_prefix !== 'string' || index_prefix.length === 0) {
@@ -24,7 +26,7 @@ if (isNaN(config_oeffnung_bei_regen) || config_oeffnung_bei_regen <= 0 || config
     // Sicherstellen, dass der gelesene Wert auch im Flow-Kontext steht (falls er z.B. manuell geändert, aber nicht gespeichert wurde)
     // Dies ist optional, aber stellt Konsistenz sicher.
     // flow.set(config_oeffnung_bei_regen_var_name, config_oeffnung_bei_regen);
-    node.log("Flow-Variable '" + config_oeffnung_bei_regen_var_name + "' aus Flow-Kontext geladen: " + config_oeffnung_bei_regen + "%");
+    if (enableNodeLogging) { node.log("Flow-Variable '" + config_oeffnung_bei_regen_var_name + "' aus Flow-Kontext geladen: " + config_oeffnung_bei_regen + "%"); }
 }
 // Der aktive Wert, der im Skript verwendet wird.
 let aktive_oeffnung_bei_regen = config_oeffnung_bei_regen;
@@ -35,14 +37,14 @@ let letzter_bekannter_sollwert_prozent = context.get("letzter_bekannter_sollwert
 if (letzter_bekannter_sollwert_prozent === undefined) {
     letzter_bekannter_sollwert_prozent = 0; // Standardwert beim allerersten Start
     context.set("letzter_bekannter_sollwert_prozent", letzter_bekannter_sollwert_prozent);
-    node.log("Initialisiere 'letzter_bekannter_sollwert_prozent' im Kontext mit: " + letzter_bekannter_sollwert_prozent + "%");
+    if (enableNodeLogging) { node.log("Initialisiere 'letzter_bekannter_sollwert_prozent' im Kontext mit: " + letzter_bekannter_sollwert_prozent + "%"); }
 }
 
 let aktueller_regen_status = context.get("aktueller_regen_status");
 if (aktueller_regen_status === undefined) {
     aktueller_regen_status = 0; // Standard: Kein Regen
     context.set("aktueller_regen_status", aktueller_regen_status);
-    node.log("Initialisiere 'aktueller_regen_status' im Kontext mit: " + aktueller_regen_status);
+    if (enableNodeLogging) { node.log("Initialisiere 'aktueller_regen_status' im Kontext mit: " + aktueller_regen_status); }
 }
 
 // 3. Eingangsverarbeitung und Logik
@@ -56,7 +58,7 @@ if (msg.payload !== undefined && msg.payload !== null) {
             letzter_bekannter_sollwert_prozent = neuer_sollwert;
             context.set("letzter_bekannter_sollwert_prozent", letzter_bekannter_sollwert_prozent);
             werte_aktualisiert = true;
-            node.log("Neuer Sollwert empfangen und im Kontext gespeichert: " + letzter_bekannter_sollwert_prozent + "%");
+            if (enableNodeLogging) { node.log("Neuer Sollwert empfangen und im Kontext gespeichert: " + letzter_bekannter_sollwert_prozent + "%"); }
         }
     } else {
         node.warn("Ungültiger msg.payload (Sollwert) empfangen: " + msg.payload + ". Muss eine Zahl zwischen 0 und 100 sein. Wird ignoriert.");
@@ -71,7 +73,7 @@ if (msg.regen !== undefined && msg.regen !== null) {
             aktueller_regen_status = neuer_regen_status;
             context.set("aktueller_regen_status", aktueller_regen_status);
             werte_aktualisiert = true;
-            node.log("Neuer Regenstatus empfangen und im Kontext gespeichert: " + (aktueller_regen_status === 1 ? "REGEN" : "KEIN REGEN"));
+            if (enableNodeLogging) { node.log("Neuer Regenstatus empfangen und im Kontext gespeichert: " + (aktueller_regen_status === 1 ? "REGEN" : "KEIN REGEN")); }
         }
     } else {
         node.warn("Ungültiger msg.regen (Regenstatus) empfangen: " + msg.regen + ". Muss 0 oder 1 sein. Wird ignoriert.");
@@ -102,11 +104,11 @@ let output_prozent;
 if (aktiver_regen_status === 1) {
     // Bei Regen: Nimm den kleineren Wert von Sollwert und Regen-Öffnungswert
     output_prozent = Math.min(aktiver_letzter_sollwert, aktive_oeffnung_bei_regen);
-    node.log("Regen aktiv. Sollwert (" + aktiver_letzter_sollwert + "%) wird durch Oeffnung_bei_Regen (" + aktive_oeffnung_bei_regen + "%) auf " + output_prozent + "% begrenzt.");
+    if (enableNodeLogging) { node.log("Regen aktiv. Sollwert (" + aktiver_letzter_sollwert + "%) wird durch Oeffnung_bei_Regen (" + aktive_oeffnung_bei_regen + "%) auf " + output_prozent + "% begrenzt."); }
 } else {
     // Kein Regen: Verwende den normalen Sollwert
     output_prozent = aktiver_letzter_sollwert;
-    node.log("Kein Regen aktiv. Sollwert ist " + output_prozent + "%.");
+    if (enableNodeLogging) { node.log("Kein Regen aktiv. Sollwert ist " + output_prozent + "%."); }
 }
 
 msg.payload = output_prozent;

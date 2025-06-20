@@ -6,6 +6,8 @@
 // Ausgang 3: ZU_Zeit (sendet verzögerten AUS-Befehl für ZU-Relais)
 // Ausgang 4: ZU_Ein/Aus (sofortiger EIN/AUS für ZU-Relais)
 
+const enableNodeLogging = true; // Schalter für node.log Ausgaben
+
 // Eingangsparameter und Validierung
 let befehl_objekt = msg.payload;
 
@@ -46,35 +48,35 @@ let msg_auf_ein_aus = null;
 let msg_zu_zeit = null;
 let msg_zu_ein_aus = null;
 
-node.log("Verarbeite Befehl: Relais=" + relais + ", Kommando=" + kommando + (kommando === "LAUF" ? ", Laufzeit=" + laufzeit_sek + "s" : ""));
+if (enableNodeLogging) { node.log("Verarbeite Befehl: Relais=" + relais + ", Kommando=" + kommando + (kommando === "LAUF" ? ", Laufzeit=" + laufzeit_sek + "s" : "")); }
 
 if (relais === "AUF") {
     if (kommando === "AUS") {
         msg_auf_ein_aus = { payload: "AUS" };
-        node.log("Ausgang 2 (AUF_Ein/Aus): Sofort AUS");
+        if (enableNodeLogging) { node.log("Ausgang 2 (AUF_Ein/Aus): Sofort AUS"); }
     } else if (kommando === "DAUER_AN") {
         msg_auf_ein_aus = { payload: "EIN" };
-        node.log("Ausgang 2 (AUF_Ein/Aus): Sofort EIN (DAUER_AN)");
+        if (enableNodeLogging) { node.log("Ausgang 2 (AUF_Ein/Aus): Sofort EIN (DAUER_AN)"); }
     } else if (kommando === "LAUF") {
         // Für "LAUF": Sofort EIN senden, und einen verzögerten AUS-Befehl vorbereiten
         msg_auf_ein_aus = { payload: "EIN" };
         msg_auf_zeit = { payload: "AUS", delay: laufzeit_sek * 1000 }; // delay in Millisekunden
-        node.log("Ausgang 2 (AUF_Ein/Aus): Sofort EIN (LAUF)");
-        node.log("Ausgang 1 (AUF_Zeit): Verzögertes AUS nach " + laufzeit_sek + "s (delay: " + (laufzeit_sek * 1000) + "ms)");
+        if (enableNodeLogging) { node.log("Ausgang 2 (AUF_Ein/Aus): Sofort EIN (LAUF)"); }
+        if (enableNodeLogging) { node.log("Ausgang 1 (AUF_Zeit): Verzögertes AUS nach " + laufzeit_sek + "s (delay: " + (laufzeit_sek * 1000) + "ms)"); }
     }
 } else if (relais === "ZU") {
     if (kommando === "AUS") {
         msg_zu_ein_aus = { payload: "AUS" };
-        node.log("Ausgang 4 (ZU_Ein/Aus): Sofort AUS");
+        if (enableNodeLogging) { node.log("Ausgang 4 (ZU_Ein/Aus): Sofort AUS"); }
     } else if (kommando === "DAUER_AN") {
         msg_zu_ein_aus = { payload: "EIN" };
-        node.log("Ausgang 4 (ZU_Ein/Aus): Sofort EIN (DAUER_AN)");
+        if (enableNodeLogging) { node.log("Ausgang 4 (ZU_Ein/Aus): Sofort EIN (DAUER_AN)"); }
     } else if (kommando === "LAUF") {
         // Für "LAUF": Sofort EIN senden, und einen verzögerten AUS-Befehl vorbereiten
         msg_zu_ein_aus = { payload: "EIN" };
         msg_zu_zeit = { payload: "AUS", delay: laufzeit_sek * 1000 }; // delay in Millisekunden
-        node.log("Ausgang 4 (ZU_Ein/Aus): Sofort EIN (LAUF)");
-        node.log("Ausgang 3 (ZU_Zeit): Verzögertes AUS nach " + laufzeit_sek + "s (delay: " + (laufzeit_sek * 1000) + "ms)");
+        if (enableNodeLogging) { node.log("Ausgang 4 (ZU_Ein/Aus): Sofort EIN (LAUF)"); }
+        if (enableNodeLogging) { node.log("Ausgang 3 (ZU_Zeit): Verzögertes AUS nach " + laufzeit_sek + "s (delay: " + (laufzeit_sek * 1000) + "ms)"); }
     }
 }
 

@@ -3,6 +3,8 @@
 // Verwendet msg.index als Präfix für Flow-Variablen (MAX_RUNTIME_SEC).
 // Stellt sicher, dass msg.index an Ausgänge weitergegeben wird.
 
+const enableNodeLogging = true; // Schalter für node.log Ausgaben
+
 // msg.index für dynamische Flow-Variablennamen verwenden
 const index_prefix = msg.index;
 if (typeof index_prefix !== 'string' || index_prefix.length === 0) {
@@ -34,11 +36,11 @@ let zuletzt_aktives_relais = context.get("zuletzt_aktives_relais");
 // Initialisierung des internen Zustands beim ersten Lauf
 if (aktuelle_position_prozent === undefined) {
     aktuelle_position_prozent = 0; // Annahme: Startposition ist 0% (geschlossen)
-    node.log("Initialisiere aktuelle_position_prozent auf 0%");
+    if (enableNodeLogging) { node.log("Initialisiere aktuelle_position_prozent auf 0%"); }
 }
 if (zuletzt_aktives_relais === undefined) {
     zuletzt_aktives_relais = "KEINES"; // Kein Relais war bisher aktiv
-    node.log("Initialisiere zuletzt_aktives_relais auf 'KEINES'");
+    if (enableNodeLogging) { node.log("Initialisiere zuletzt_aktives_relais auf 'KEINES'"); }
 }
 
 // Berechnung der Differenz
@@ -46,7 +48,7 @@ let differenz_prozent = ziel_prozent - aktuelle_position_prozent;
 
 // Wenn keine Änderung erforderlich ist
 if (differenz_prozent === 0) {
-    node.log("Zielposition (" + ziel_prozent + "%) bereits erreicht. Keine Aktion.");
+    if (enableNodeLogging) { node.log("Zielposition (" + ziel_prozent + "%) bereits erreicht. Keine Aktion."); }
     return [null, null]; // Keine Nachrichten an beide Ausgänge
 }
 
@@ -64,7 +66,7 @@ if (ziel_prozent === 0) {
     }
     nachricht_ausgang2 = { payload: { "relais": "ZU", "kommando": "DAUER_AN" } };
     naechstes_aktives_relais = "ZU";
-    node.log("Fahre komplett ZU. Ggf. AUF-Relais AUS, ZU-Relais DAUER_AN.");
+    if (enableNodeLogging) { node.log("Fahre komplett ZU. Ggf. AUF-Relais AUS, ZU-Relais DAUER_AN."); }
 } else if (ziel_prozent === 100) {
     // Fall: Komplett AUF fahren
     if (zuletzt_aktives_relais === "ZU") {
@@ -72,7 +74,7 @@ if (ziel_prozent === 0) {
     }
     nachricht_ausgang2 = { payload: { "relais": "AUF", "kommando": "DAUER_AN" } };
     naechstes_aktives_relais = "AUF";
-    node.log("Fahre komplett AUF. Ggf. ZU-Relais AUS, AUF-Relais DAUER_AN.");
+    if (enableNodeLogging) { node.log("Fahre komplett AUF. Ggf. ZU-Relais AUS, AUF-Relais DAUER_AN."); }
 } else if (differenz_prozent > 0) {
     // Fall: ÖFFNEN / AUF-Fahren (nicht zu 100%)
     let laufzeit_sek = (differenz_prozent / 100) * aktive_max_runtime_sec;
@@ -82,9 +84,9 @@ if (ziel_prozent === 0) {
         }
         nachricht_ausgang2 = { payload: { "relais": "AUF", "kommando": "LAUF", "laufzeit_sek": laufzeit_sek } };
         naechstes_aktives_relais = "AUF";
-        node.log("Öffne um " + differenz_prozent.toFixed(2) + "%. Ggf. ZU-Relais AUS, AUF-Relais LAUF für " + laufzeit_sek.toFixed(2) + "s.");
+        if (enableNodeLogging) { node.log("Öffne um " + differenz_prozent.toFixed(2) + "%. Ggf. ZU-Relais AUS, AUF-Relais LAUF für " + laufzeit_sek.toFixed(2) + "s."); }
     } else {
-        node.log("Berechnete Laufzeit zum Öffnen ist <= 0s (" + laufzeit_sek.toFixed(2) + "s). Keine Aktion.");
+        if (enableNodeLogging) { node.log("Berechnete Laufzeit zum Öffnen ist <= 0s (" + laufzeit_sek.toFixed(2) + "s). Keine Aktion."); }
         return [null, null];
     }
 } else if (differenz_prozent < 0) {
@@ -96,9 +98,9 @@ if (ziel_prozent === 0) {
         }
         nachricht_ausgang2 = { payload: { "relais": "ZU", "kommando": "LAUF", "laufzeit_sek": laufzeit_sek } };
         naechstes_aktives_relais = "ZU";
-        node.log("Schließe um " + Math.abs(differenz_prozent).toFixed(2) + "%. Ggf. AUF-Relais AUS, ZU-Relais LAUF für " + laufzeit_sek.toFixed(2) + "s.");
+        if (enableNodeLogging) { node.log("Schließe um " + Math.abs(differenz_prozent).toFixed(2) + "%. Ggf. AUF-Relais AUS, ZU-Relais LAUF für " + laufzeit_sek.toFixed(2) + "s."); }
     } else {
-        node.log("Berechnete Laufzeit zum Schließen ist <= 0s (" + laufzeit_sek.toFixed(2) + "s). Keine Aktion.");
+        if (enableNodeLogging) { node.log("Berechnete Laufzeit zum Schließen ist <= 0s (" + laufzeit_sek.toFixed(2) + "s). Keine Aktion."); }
         return [null, null];
     }
 }
@@ -106,7 +108,7 @@ if (ziel_prozent === 0) {
 // Internen Zustand aktualisieren *nach* der Logik-Abarbeitung
 context.set("aktuelle_position_prozent", ziel_prozent);
 context.set("zuletzt_aktives_relais", naechstes_aktives_relais);
-node.log("Kontext aktualisiert: aktuelle_position_prozent=" + ziel_prozent + "%, zuletzt_aktives_relais=" + naechstes_aktives_relais);
+if (enableNodeLogging) { node.log("Kontext aktualisiert: aktuelle_position_prozent=" + ziel_prozent + "%, zuletzt_aktives_relais=" + naechstes_aktives_relais); }
 
 // msg.index an ausgehende Nachrichten anhängen, falls diese existieren
 if (nachricht_ausgang1 !== null) {

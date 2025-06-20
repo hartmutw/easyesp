@@ -3,6 +3,8 @@
 // Konfigurationsparameter werden aus dem Flow-Kontext gelesen oder dort mit Standardwerten initialisiert.
 // msg.index wird als Präfix für die Flow-Variablennamen verwendet.
 
+const enableNodeLogging = true; // Schalter für node.log Ausgaben
+
 // msg.index für dynamische Flow-Variablennamen verwenden
 const index_prefix = msg.index;
 if (typeof index_prefix !== 'string' || index_prefix.length === 0) {
@@ -93,12 +95,12 @@ if (ideale_soll_position === 0 || ideale_soll_position === 100) {
     aktuelle_soll_position = ideale_soll_position;
 } else if (vorherige_soll_position === undefined) {
     aktuelle_soll_position = ideale_soll_position;
-    node.log("Erster Durchlauf oder vorherige_soll_position nicht definiert, setze Position auf: " + aktuelle_soll_position.toFixed(2) + "%");
+    if (enableNodeLogging) { node.log("Erster Durchlauf oder vorherige_soll_position nicht definiert, setze Position auf: " + aktuelle_soll_position.toFixed(2) + "%"); }
 } else if (Math.abs(ideale_soll_position - vorherige_soll_position) < min_positions_aenderung_prozent) {
     aktuelle_soll_position = vorherige_soll_position;
-    node.log("Änderung (" + Math.abs(ideale_soll_position - vorherige_soll_position).toFixed(2) +
+    if (enableNodeLogging) { node.log("Änderung (" + Math.abs(ideale_soll_position - vorherige_soll_position).toFixed(2) +
              "%) ist kleiner als min_positions_aenderung_prozent (" + min_positions_aenderung_prozent.toFixed(2) +
-             "%). Behalte vorherige Position: " + aktuelle_soll_position.toFixed(2) + "%");
+             "%). Behalte vorherige Position: " + aktuelle_soll_position.toFixed(2) + "%"); }
 } else {
     aktuelle_soll_position = ideale_soll_position;
 }

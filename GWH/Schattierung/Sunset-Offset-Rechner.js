@@ -3,6 +3,8 @@
 // Ausgang: msg, ergänzt um berechnete Zeitstempel und HH:MM Strings.
 // Verwendet Flow-Kontext für "Schatt_Sonnenuntergang_Offset_Min".
 
+const enableNodeLogging = true; // Schalter für node.log Ausgaben
+
 // Hilfsfunktion zur Formatierung einer Zahl auf zwei Stellen mit führender Null
 function formatHHMMValue(value) {
     return value < 10 ? '0' + value : value.toString();
@@ -24,17 +26,17 @@ let sonnenuntergang_date;
 if (msg.end instanceof Date && !isNaN(msg.end.getTime())) {
     // msg.end ist bereits ein gültiges Date-Objekt
     sonnenuntergang_date = msg.end;
-    node.log("msg.end ist bereits ein gültiges Date-Objekt: " + sonnenuntergang_date.toISOString());
+    if (enableNodeLogging) { node.log("msg.end ist bereits ein gültiges Date-Objekt: " + sonnenuntergang_date.toISOString()); }
 } else if (typeof msg.end === 'string') {
     // msg.end ist ein String, versuche zu parsen
-    node.log("msg.end ist ein String ('" + msg.end + "'), versuche zu parsen...");
+    if (enableNodeLogging) { node.log("msg.end ist ein String ('" + msg.end + "'), versuche zu parsen..."); }
     try {
         sonnenuntergang_date = new Date(msg.end);
         if (isNaN(sonnenuntergang_date.getTime())) {
             node.error("Fehler: msg.end ('" + msg.end + "') konnte nicht in ein gültiges Datum geparst werden (Ergebnis ist NaN).", msg);
             return null;
         }
-        node.log("Sonnenuntergang (msg.end String) erfolgreich geparst: " + sonnenuntergang_date.toISOString());
+        if (enableNodeLogging) { node.log("Sonnenuntergang (msg.end String) erfolgreich geparst: " + sonnenuntergang_date.toISOString()); }
     } catch (e) {
         node.error("Fehler beim Parsen von msg.end String ('" + msg.end + "') zu einem Datum: " + e.message, msg);
         return null;
@@ -55,7 +57,7 @@ if (isNaN(offset_minuten) || offset_minuten < 0) {
     offset_minuten = STANDARD_OFFSET_MIN;
     flow.set(offset_var_name, offset_minuten);
 } else {
-    node.log("Flow-Variable '" + offset_var_name + "' aus Flow-Kontext geladen: " + offset_minuten + " Minuten.");
+    if (enableNodeLogging) { node.log("Flow-Variable '" + offset_var_name + "' aus Flow-Kontext geladen: " + offset_minuten + " Minuten."); }
     // Optional: flow.set hier, um sicherzustellen, dass der Wert auch gespeichert ist, falls er manuell geändert wurde.
     // flow.set(offset_var_name, offset_minuten);
 }
@@ -65,19 +67,19 @@ if (isNaN(offset_minuten) || offset_minuten < 0) {
 // c. Erzeuge ein neues Date-Objekt berechnete_schliesszeit_date
 let berechnete_schliesszeit_date = new Date(sonnenuntergang_date.getTime());
 berechnete_schliesszeit_date.setMinutes(sonnenuntergang_date.getMinutes() - offset_minuten);
-node.log("Berechnete Schließzeit (Datumsobjekt): " + berechnete_schliesszeit_date.toISOString());
+if (enableNodeLogging) { node.log("Berechnete Schließzeit (Datumsobjekt): " + berechnete_schliesszeit_date.toISOString()); }
 
 // d. Formatierung der Zeitangaben (HH:MM)
 const tatsaechlicher_sonnenuntergang_hhmm = dateToHHMMString(sonnenuntergang_date);
 const berechnete_schliesszeit_hhmm = dateToHHMMString(berechnete_schliesszeit_date);
-node.log("Tatsächlicher Sonnenuntergang (HH:MM): " + tatsaechlicher_sonnenuntergang_hhmm);
-node.log("Berechnete Schließzeit (HH:MM): " + berechnete_schliesszeit_hhmm);
+if (enableNodeLogging) { node.log("Tatsächlicher Sonnenuntergang (HH:MM): " + tatsaechlicher_sonnenuntergang_hhmm); }
+if (enableNodeLogging) { node.log("Berechnete Schließzeit (HH:MM): " + berechnete_schliesszeit_hhmm); }
 
 // e. Umwandlung in Timestamps (Millisekunden seit Epoche)
 const tatsaechlicher_sonnenuntergang_ts = sonnenuntergang_date.getTime();
 const berechnete_schliesszeit_ts = berechnete_schliesszeit_date.getTime();
-node.log("Tatsächlicher Sonnenuntergang (Timestamp): " + tatsaechlicher_sonnenuntergang_ts);
-node.log("Berechnete Schließzeit (Timestamp): " + berechnete_schliesszeit_ts);
+if (enableNodeLogging) { node.log("Tatsächlicher Sonnenuntergang (Timestamp): " + tatsaechlicher_sonnenuntergang_ts); }
+if (enableNodeLogging) { node.log("Berechnete Schließzeit (Timestamp): " + berechnete_schliesszeit_ts); }
 
 // 4. Ausgang (Output)
 msg.tatsaechlicher_sonnenuntergang_ts = tatsaechlicher_sonnenuntergang_ts;
@@ -87,6 +89,6 @@ msg.berechnete_schliesszeit_hhmm = berechnete_schliesszeit_hhmm;
 
 // Zusätzliche Info für das Logging
 msg.schatt_offset_min_verwendet = offset_minuten;
-node.log("Ausgehende msg vorbereitet mit berechneten Zeiten. Verwendeter Offset: " + offset_minuten + " Min.");
+if (enableNodeLogging) { node.log("Ausgehende msg vorbereitet mit berechneten Zeiten. Verwendeter Offset: " + offset_minuten + " Min."); }
 
 return msg;
