@@ -6,11 +6,11 @@ const enableNodeLogging = true; // Schalter für node.log Ausgaben
 
 // --- 1. Eingänge (Input) Validierung ---
 if (typeof msg.strahlungWm2 !== 'number' || isNaN(msg.strahlungWm2)) {
-    node.error("Eingang 'msg.strahlungWm2' fehlt oder ist ungültig (muss eine Zahl sein). Empfangen: " + msg.strahlungWm2, msg);
+    node.error("Eingang 'msg.strahlungWm2' fehlt oder ist ungültig (muss eine Zahl sein). Empfangen: " + msg.strahlungWm2);
     return null;
 }
 if (typeof msg.currentHHMM !== 'string' || !/^\d{2}:\d{2}$/.test(msg.currentHHMM)) {
-    node.error("Eingang 'msg.currentHHMM' fehlt oder ist ungültig (Format HH:MM erwartet). Empfangen: " + msg.currentHHMM, msg);
+    node.error("Eingang 'msg.currentHHMM' fehlt oder ist ungültig (Format HH:MM erwartet). Empfangen: " + msg.currentHHMM);
     return null;
 }
 
@@ -19,7 +19,7 @@ if (msg.isNight === undefined) {
     if (enableNodeLogging) node.log("Eingang 'msg.isNight' fehlt, nehme 'false' (Tag) an.");
     msg.isNight = false;
 } else if (typeof msg.isNight !== 'boolean') {
-    node.warn("Eingang 'msg.isNight' ist kein Boolean, nehme 'false' (Tag) an. Empfangen: " + msg.isNight, msg);
+    node.warn("Eingang 'msg.isNight' ist kein Boolean, nehme 'false' (Tag) an. Empfangen: " + msg.isNight);
     msg.isNight = false;
 }
 
@@ -27,7 +27,7 @@ if (msg.sollSchliessenWegenSonnenuntergang === undefined) {
     if (enableNodeLogging) node.log("Eingang 'msg.sollSchliessenWegenSonnenuntergang' fehlt, nehme 'false' an.");
     msg.sollSchliessenWegenSonnenuntergang = false;
 } else if (typeof msg.sollSchliessenWegenSonnenuntergang !== 'boolean') {
-    node.warn("Eingang 'msg.sollSchliessenWegenSonnenuntergang' ist kein Boolean, nehme 'false' an. Empfangen: " + msg.sollSchliessenWegenSonnenuntergang, msg);
+    node.warn("Eingang 'msg.sollSchliessenWegenSonnenuntergang' ist kein Boolean, nehme 'false' an. Empfangen: " + msg.sollSchliessenWegenSonnenuntergang);
     msg.sollSchliessenWegenSonnenuntergang = false;
 }
 
@@ -35,7 +35,7 @@ if (msg.sollSchliessenWegenFesterZeit === undefined) {
     if (enableNodeLogging) node.log("Eingang 'msg.sollSchliessenWegenFesterZeit' fehlt, nehme 'false' an.");
     msg.sollSchliessenWegenFesterZeit = false;
 } else if (typeof msg.sollSchliessenWegenFesterZeit !== 'boolean') {
-    node.warn("Eingang 'msg.sollSchliessenWegenFesterZeit' ist kein Boolean, nehme 'false' an. Empfangen: " + msg.sollSchliessenWegenFesterZeit, msg);
+    node.warn("Eingang 'msg.sollSchliessenWegenFesterZeit' ist kein Boolean, nehme 'false' an. Empfangen: " + msg.sollSchliessenWegenFesterZeit);
     msg.sollSchliessenWegenFesterZeit = false;
 }
 
